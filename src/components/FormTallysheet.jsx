@@ -45,7 +45,7 @@ function FormTallysheet() {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL}/api/generate-tallysheet`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/generate-tallysheet`,
         {
           method: "POST",
           body: formData,
