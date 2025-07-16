@@ -1,112 +1,118 @@
-import { useState } from "react";
+/* App.css template tetap. Ini update FormTallysheet.jsx, silakan masukkan ke src/components/FormTallysheet.jsx */
+
+import React, { useState } from "react";
+import axios from "axios";
 
 function FormTallysheet() {
-  const [form, setForm] = useState({
-    namaKHG: "",
-    namaPerusahaan: "",
-    tahun: "",
-    nomorTitik: "",
-    tanggal: "",
-    namaSurveyor: "",
-    dusun: "",
-    desa: "",
-    kecamatan: "",
-    kabupaten: "",
-    latitude: "",
-    arahLat: "LS",
-    longitude: "",
-    arahLong: "BT",
-    elevasi: "",
-    flora: "",
-    fauna: "",
-    sketsa: [],
-    fotoTambahan: [],
-  });
+  const [formData, setFormData] = useState({});
+  const [files, setFiles] = useState({});
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileUpload = (e, key) => {
-    const files = Array.from(e.target.files);
-    setForm((prev) => ({ ...prev, [key]: files }));
+  const handleUpload = (e, name) => {
+    setFiles({ ...files, [name]: Array.from(e.target.files) });
   };
 
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach((file) => formData.append(key, file));
-      } else {
-        formData.append(key, value);
-      }
-    });
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const data = new FormData();
+    Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+    Object.entries(files).forEach(([key, valueArr]) => valueArr.forEach((file, idx) => data.append(`${key}_${idx + 1}`, file)));
     try {
-      const res = await fetch(
+      const res = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/generate-tallysheet`,
-        {
-          method: "POST",
-          body: formData,
-        }
+        data,
+        { responseType: "blob" }
       );
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Tallysheet_Gambut.docx";
-      a.click();
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Tallysheet-Gambut.docx");
+      document.body.appendChild(link);
+      link.click();
     } catch (err) {
-      alert("Gagal mengirim form. Periksa koneksi atau backend.");
       console.error(err);
+      alert("Gagal mengirim form. Periksa koneksi atau backend.");
     }
   };
 
   return (
-    <div style={{ maxWidth: "800px", margin: "auto", padding: "20px" }}>
-      <h2 style={{ fontSize: "1.5rem", marginBottom: "1rem" }}>Form Tallysheet Gambut</h2>
-      <input name="namaKHG" placeholder="Nama KHG" value={form.namaKHG} onChange={handleChange} />
-      <input name="namaPerusahaan" placeholder="Nama Perusahaan" value={form.namaPerusahaan} onChange={handleChange} />
-      <input name="tahun" placeholder="Tahun Pelaksanaan" value={form.tahun} onChange={handleChange} />
-      <input name="nomorTitik" placeholder="Nomor Titik Survey" value={form.nomorTitik} onChange={handleChange} />
-      <input type="date" name="tanggal" value={form.tanggal} onChange={handleChange} />
-      <input name="namaSurveyor" placeholder="Nama Surveyor" value={form.namaSurveyor} onChange={handleChange} />
-      <input name="dusun" placeholder="Dusun" value={form.dusun} onChange={handleChange} />
-      <input name="desa" placeholder="Desa" value={form.desa} onChange={handleChange} />
-      <input name="kecamatan" placeholder="Kecamatan" value={form.kecamatan} onChange={handleChange} />
-      <input name="kabupaten" placeholder="Kabupaten" value={form.kabupaten} onChange={handleChange} />
+    <form onSubmit={handleSubmit}>
+      <h2>A. FORMULIR TALLYSHEET</h2>
+      <input name="namaKHG" placeholder="Nama KHG" onChange={handleChange} />
+<input name="namaPerusahaan" placeholder="Nama Perusahaan" onChange={handleChange} />
+<input name="tahunPelaksanaan" placeholder="Tahun Pelaksanaan" onChange={handleChange} />
+<input name="nomorTitikSurvey" placeholder="Nomor Titik Survey" onChange={handleChange} />
+<input name="hariTanggal" placeholder="Hari/Tanggal" onChange={handleChange} />
+<input name="namaSurveyor" placeholder="Nama Surveyor" onChange={handleChange} />
+<input name="dusun" placeholder="Dusun" onChange={handleChange} />
+<input name="desa" placeholder="Desa" onChange={handleChange} />
+<input name="kecamatan" placeholder="Kecamatan" onChange={handleChange} />
+<input name="kabupaten" placeholder="Kabupaten" onChange={handleChange} />
+<label>Koordinat Latitude (LS/LU)</label>
+<input name="koordinatLatitudeDerajat" placeholder="Derajat" type="number" onChange={handleChange} />
+<input name="koordinatLatitudeMenit" placeholder="Menit" type="number" onChange={handleChange} />
+<input name="koordinatLatitudeDetik" placeholder="Detik" type="number" onChange={handleChange} />
+<label>Koordinat Longitude (BT/BB)</label>
+<input name="koordinatLongitudeDerajat" placeholder="Derajat" type="number" onChange={handleChange} />
+<input name="koordinatLongitudeMenit" placeholder="Menit" type="number" onChange={handleChange} />
+<input name="koordinatLongitudeDetik" placeholder="Detik" type="number" onChange={handleChange} />
+<input name="elevasiLahan" placeholder="Elevasi Lahan (mdpl)" onChange={handleChange} />
+<input name="kedalamanAirTanah" placeholder="Kedalaman Air Tanah / TMAT / Genangan / Banjir" onChange={handleChange} />
+<input name="tutupanPenggunaanLahan" placeholder="Tutupan Lahan / Penggunaan Lahan / Kondisinya" onChange={handleChange} />
+<input name="floraFaunaDilindungi" placeholder="Keberadaan Flora dan Fauna Dilindungi" onChange={handleChange} />
+<input name="kondisiDrainaseAlami" placeholder="Kondisi Drainase Alami" onChange={handleChange} />
+<input name="kondisiDrainaseBuatan" placeholder="Kondisi Drainase Buatan" onChange={handleChange} />
+<input name="kualitasAirKanal" placeholder="Kualitas Air Kanal (µS, ppm, pH)" onChange={handleChange} />
+<input name="karakteristikSubstratum" placeholder="Karakteristik Substratum Tanah Liat (Bahan Induk)" onChange={handleChange} />
+<input name="tipeLuapan" placeholder="Tipe Luapan Musim Kemarau dan Hujan" onChange={handleChange} />
+<input name="ketebalanGambut" placeholder="Ketebalan Gambut (cm)" onChange={handleChange} />
+<input name="substratumBawahGambut" placeholder="Karakteristik Substratum di Bawah Lapisan Gambut" onChange={handleChange} />
+<input name="perkembanganKerusakan" placeholder="Perkembangan Kondisi atau Tingkat Kerusakan Lahan Gambut" onChange={handleChange} />
+<input name="informasiKebakaran" placeholder="Informasi Kejadian Kebakaran Lahan dan Hari Hujan" onChange={handleChange} />
+<input name="porositasBobotIsi" placeholder="Porositas (Bobot Isi) (%)" onChange={handleChange} />
+<input name="kelengasanKadarAir" placeholder="Kelengasan (Kadar Air) (%)" onChange={handleChange} />
+<input name="cOrganik" placeholder="C-Organik (%)" onChange={handleChange} />
+      {/* Lengkapi input lainnya seperti sebelumnya */}
 
-      <div>
-        <input name="latitude" placeholder="Latitude (misal: 02°12'28.58)" value={form.latitude} onChange={handleChange} />
-        <select name="arahLat" value={form.arahLat} onChange={handleChange}>
-          <option value="LS">LS</option>
-          <option value="LU">LU</option>
-        </select>
-      </div>
-
-      <div>
-        <input name="longitude" placeholder="Longitude (misal: 110°12'15.39)" value={form.longitude} onChange={handleChange} />
-        <select name="arahLong" value={form.arahLong} onChange={handleChange}>
-          <option value="BT">BT</option>
-          <option value="BB">BB</option>
-        </select>
-      </div>
-
-      <input name="elevasi" placeholder="Elevasi Lahan (mdpl)" value={form.elevasi} onChange={handleChange} />
-      <textarea name="flora" placeholder="Flora yang Dilindungi" value={form.flora} onChange={handleChange} />
-      <textarea name="fauna" placeholder="Fauna yang Dilindungi" value={form.fauna} onChange={handleChange} />
-
-      <label>Upload Sketsa Lokasi (foto)</label>
-      <input type="file" multiple onChange={(e) => handleFileUpload(e, "sketsa")} />
-
-      <label>Upload Foto Tambahan</label>
-      <input type="file" multiple onChange={(e) => handleFileUpload(e, "fotoTambahan")} />
-
-      <button onClick={handleSubmit} style={{ marginTop: "20px" }}>
-        Kirim dan Unduh Word
-      </button>
-    </div>
+      <h2>B. FOTO LAPANGAN</h2>
+      <p><em>Seluruh hasil foto yang diambil harus jelas dan tidak membelakangi matahari</em></p>
+      <label>1. Air tanah, genangan atau banjir</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "airTanahGenangan")}/>
+      <label>2. Tutupan lahan, penggunaan lahan dan kondisinya</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "tutupanLahan")}/>
+      <label>3. Keberadaan flora dan fauna yang dilindungi</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "floraFauna")}/>
+      <label>4. Drainase alami</label>
+      <input type="file" onChange={(e) => handleUpload(e, "drainaseAlami")}/>
+      <label>4. Drainase buatan</label>
+      <input type="file" onChange={(e) => handleUpload(e, "drainaseBuatan")}/>
+      <label>5. Kualitas Air/Kondisi Air Kanal - EC</label>
+      <input type="file" onChange={(e) => handleUpload(e, "airEC")}/>
+      <label>5. Kualitas Air/Kondisi Air Kanal - TDS</label>
+      <input type="file" onChange={(e) => handleUpload(e, "airTDS")}/>
+      <label>5. Kualitas Air/Kondisi Air Kanal - pH</label>
+      <input type="file" onChange={(e) => handleUpload(e, "airPH")}/>
+      <label>6. Pengukuran Tinggi Muka Air Tanah</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "tmat")}/>
+      <label>7. Ketebalan ngambut</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "ketebalanGambut")}/>
+      <label>8. Karakteristik substratum - EC</label>
+      <input type="file" onChange={(e) => handleUpload(e, "substratumEC")}/>
+      <label>8. Karakteristik substratum - pH</label>
+      <input type="file" onChange={(e) => handleUpload(e, "substratumPH")}/>
+      <label>9. Perkembangan kondisi atau tingkat kerusakan</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "kerusakanLahan")}/>
+      <label>10. Karakteristik tanah dan kedalaman lapisan pirit</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "tanahPirit")}/>
+      <label>11. Porositas dan Kelengasan</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "porositasKelengasan")}/>
+      <label>12. Foto Tambahan</label>
+      <input type="file" multiple onChange={(e) => handleUpload(e, "fotoTambahan")}/>
+      <button type="submit">Kirim dan Unduh Tallysheet</button>
+    </form>
   );
 }
 
